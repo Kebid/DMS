@@ -1,0 +1,30 @@
+2025-08-04 22:36:19,862 - dental_clinic - INFO - main:24 - Starting Dental Clinic Management System
+2025-08-04 22:36:19,946 - dental_clinic - INFO - main:29 - Database initialized successfully
+2025-08-04 22:36:21,129 - dental_clinic - INFO - main:48 - Application window created successfully
+2025-08-04 23:23:46,666 - dental_clinic - INFO - main:24 - Starting Dental Clinic Management System
+2025-08-04 23:23:46,768 - dental_clinic - ERROR - main:44 - Error starting application: no such column: invoice_id
+2025-08-04 23:27:03,753 - dental_clinic - INFO - main:24 - Starting Dental Clinic Management System
+2025-08-04 23:27:04,453 - dental_clinic - INFO - main:29 - Database initialized successfully
+2025-08-04 23:27:06,979 - dental_clinic - INFO - main:38 - Login window created successfully
+2025-08-04 23:30:33,698 - dental_clinic - INFO - main:24 - Starting Dental Clinic Management System
+2025-08-04 23:30:34,744 - dental_clinic - INFO - main:29 - Database initialized successfully
+2025-08-04 23:30:42,410 - dental_clinic - INFO - main:38 - Login window created successfully
+2025-08-04 23:40:21,794 - dental_clinic - INFO - main:24 - Starting Dental Clinic Management System
+2025-08-04 23:40:21,798 - dental_clinic - INFO - main:29 - Database initialized successfully
+2025-08-04 23:40:22,151 - dental_clinic - INFO - main:38 - Login window created successfully
+2025-08-04 23:47:55,519 - dental_clinic - INFO - main:34 - Starting Dental Clinic Management System
+2025-08-04 23:47:55,527 - dental_clinic - INFO - main:37 - Initializing users database...
+2025-08-04 23:47:56,339 - dental_clinic - INFO - main:43 - Main database initialized successfully
+2025-08-04 23:47:57,611 - dental_clinic - INFO - main:49 - Login window created successfully
+2025-08-04 23:50:59,827 - dental_clinic - INFO - main:34 - Starting Dental Clinic Management System
+2025-08-04 23:50:59,831 - dental_clinic - INFO - main:37 - Initializing users database...
+2025-08-04 23:50:59,884 - dental_clinic - INFO - main:43 - Main database initialized successfully
+2025-08-04 23:51:02,452 - dental_clinic - INFO - main:49 - Login window created successfully
+2025-08-04 23:55:13,711 - dental_clinic - INFO - main:34 - Starting Dental Clinic Management System
+2025-08-04 23:55:13,711 - dental_clinic - INFO - main:37 - Initializing users database...
+2025-08-04 23:55:13,726 - dental_clinic - INFO - main:43 - Main database initialized successfully
+2025-08-04 23:55:14,777 - dental_clinic - INFO - main:49 - Login window created successfully
+2025-08-04 23:57:51,560 - dental_clinic - INFO - main:34 - Starting Dental Clinic Management System
+2025-08-04 23:57:51,567 - dental_clinic - INFO - main:37 - Initializing users database...
+2025-08-04 23:57:51,621 - dental_clinic - INFO - main:43 - Main database initialized successfully
+2025-08-04 23:57:53,336 - dental_clinic - INFO - main:49 - Login window created successfully

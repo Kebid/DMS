@@ -1,0 +1,20 @@
+# Dental Clinic Management System Requirements
+# Core Python packages (usually included with Python installation)
+# tkinter - GUI framework (included with Python)
+# sqlite3 - Database (included with Python)
+# datetime - Date/time utilities (included with Python)
+# logging - Logging utilities (included with Python)
+# re - Regular expressions (included with Python)
+# os - Operating system interface (included with Python)
+# sys - System-specific parameters (included with Python)
+# typing - Type hints (included with Python)
+# dataclasses - Data classes (included with Python 3.7+)
+
+# No external dependencies required for basic functionality
+# The application uses only Python standard library modules
+
+# Optional: For enhanced functionality (uncomment if needed)
+# pillow>=9.0.0  # For image handling (patient photos, etc.)
+# reportlab>=3.6.0  # For PDF report generation
+# openpyxl>=3.0.0  # For Excel export functionality
+# matplotlib>=3.5.0  # For charts and graphs in reports 

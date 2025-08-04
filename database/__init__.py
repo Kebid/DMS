@@ -1,0 +1,1 @@
+# Database package for Dental Clinic Management System 
