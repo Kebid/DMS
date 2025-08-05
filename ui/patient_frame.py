@@ -12,9 +12,10 @@ from models.patient import Patient
 class PatientFrame(tk.Frame):
     """Patient management frame"""
     
-    def __init__(self, parent, db_manager):
+    def __init__(self, parent, db_manager, current_user=None):
         super().__init__(parent, bg='white')
         self.db_manager = db_manager
+        self.current_user = current_user
         self.logger = logging.getLogger(__name__)
         self.selected_patient = None
         
@@ -63,17 +64,19 @@ class PatientFrame(tk.Frame):
         buttons_frame = tk.Frame(list_frame, bg='white')
         buttons_frame.pack(fill=tk.X, padx=10, pady=(0, 10))
         
-        add_btn = tk.Button(
-            buttons_frame,
-            text="Add Patient",
-            command=self.add_patient,
-            bg='#27ae60',
-            fg='white',
-            bd=0,
-            padx=15,
-            pady=5
-        )
-        add_btn.pack(side=tk.LEFT, padx=(0, 5))
+        # Only show Add Patient button for receptionist and admin, not for doctors
+        if not self.current_user or self.current_user.get('role') != 'doctor':
+            add_btn = tk.Button(
+                buttons_frame,
+                text="Add Patient",
+                command=self.add_patient,
+                bg='#27ae60',
+                fg='white',
+                bd=0,
+                padx=15,
+                pady=5
+            )
+            add_btn.pack(side=tk.LEFT, padx=(0, 5))
         
         refresh_btn = tk.Button(
             buttons_frame,
@@ -153,35 +156,131 @@ class PatientFrame(tk.Frame):
         self.last_name_var = tk.StringVar()
         tk.Entry(parent, textvariable=self.last_name_var, width=30).grid(row=1, column=1, sticky=tk.W, pady=5, padx=(10, 0))
         
+        # Age
+        tk.Label(parent, text="Age:", bg='white').grid(row=2, column=0, sticky=tk.W, pady=5)
+        self.age_var = tk.StringVar()
+        tk.Entry(parent, textvariable=self.age_var, width=30).grid(row=2, column=1, sticky=tk.W, pady=5, padx=(10, 0))
+        
+        # Treatment
+        tk.Label(parent, text="Treatment:", bg='white').grid(row=3, column=0, sticky=tk.W, pady=5)
+        self.treatment_var = tk.StringVar()
+        tk.Entry(parent, textvariable=self.treatment_var, width=30).grid(row=3, column=1, sticky=tk.W, pady=5, padx=(10, 0))
+        
         # Date of Birth
-        tk.Label(parent, text="Date of Birth:", bg='white').grid(row=2, column=0, sticky=tk.W, pady=5)
+        tk.Label(parent, text="Date of Birth:", bg='white').grid(row=4, column=0, sticky=tk.W, pady=5)
         self.dob_var = tk.StringVar()
-        tk.Entry(parent, textvariable=self.dob_var, width=30).grid(row=2, column=1, sticky=tk.W, pady=5, padx=(10, 0))
+        tk.Entry(parent, textvariable=self.dob_var, width=30).grid(row=4, column=1, sticky=tk.W, pady=5, padx=(10, 0))
         
         # Phone
-        tk.Label(parent, text="Phone:", bg='white').grid(row=3, column=0, sticky=tk.W, pady=5)
+        tk.Label(parent, text="Phone:", bg='white').grid(row=5, column=0, sticky=tk.W, pady=5)
         self.phone_var = tk.StringVar()
-        tk.Entry(parent, textvariable=self.phone_var, width=30).grid(row=3, column=1, sticky=tk.W, pady=5, padx=(10, 0))
+        tk.Entry(parent, textvariable=self.phone_var, width=30).grid(row=5, column=1, sticky=tk.W, pady=5, padx=(10, 0))
         
         # Email
-        tk.Label(parent, text="Email:", bg='white').grid(row=4, column=0, sticky=tk.W, pady=5)
+        tk.Label(parent, text="Email:", bg='white').grid(row=6, column=0, sticky=tk.W, pady=5)
         self.email_var = tk.StringVar()
-        tk.Entry(parent, textvariable=self.email_var, width=30).grid(row=4, column=1, sticky=tk.W, pady=5, padx=(10, 0))
+        tk.Entry(parent, textvariable=self.email_var, width=30).grid(row=6, column=1, sticky=tk.W, pady=5, padx=(10, 0))
         
         # Address
-        tk.Label(parent, text="Address:", bg='white').grid(row=5, column=0, sticky=tk.W, pady=5)
+        tk.Label(parent, text="Address:", bg='white').grid(row=7, column=0, sticky=tk.W, pady=5)
         self.address_text = tk.Text(parent, height=3, width=30)
-        self.address_text.grid(row=5, column=1, sticky=tk.W, pady=5, padx=(10, 0))
+        self.address_text.grid(row=7, column=1, sticky=tk.W, pady=5, padx=(10, 0))
         
         # Emergency Contact
-        tk.Label(parent, text="Emergency Contact:", bg='white').grid(row=6, column=0, sticky=tk.W, pady=5)
+        tk.Label(parent, text="Emergency Contact:", bg='white').grid(row=8, column=0, sticky=tk.W, pady=5)
         self.emergency_contact_var = tk.StringVar()
-        tk.Entry(parent, textvariable=self.emergency_contact_var, width=30).grid(row=6, column=1, sticky=tk.W, pady=5, padx=(10, 0))
+        tk.Entry(parent, textvariable=self.emergency_contact_var, width=30).grid(row=8, column=1, sticky=tk.W, pady=5, padx=(10, 0))
         
-        # Medical History
-        tk.Label(parent, text="Medical History:", bg='white').grid(row=7, column=0, sticky=tk.W, pady=5)
-        self.medical_history_text = tk.Text(parent, height=4, width=30)
-        self.medical_history_text.grid(row=7, column=1, sticky=tk.W, pady=5, padx=(10, 0))
+        # Medical History (read-only for receptionist)
+        tk.Label(parent, text="Medical History:", bg='white').grid(row=9, column=0, sticky=tk.W, pady=5)
+        self.medical_history_text = tk.Text(parent, height=8, width=40, font=('Consolas', 9))
+        self.medical_history_text.grid(row=9, column=1, sticky=tk.W, pady=5, padx=(10, 0))
+        
+        # Add scrollbar for medical history
+        medical_history_scrollbar = ttk.Scrollbar(parent, orient=tk.VERTICAL, command=self.medical_history_text.yview)
+        self.medical_history_text.configure(yscrollcommand=medical_history_scrollbar.set)
+        medical_history_scrollbar.grid(row=9, column=2, sticky=tk.NS, pady=5)
+        
+        self.apply_role_restrictions()
+    
+    def apply_role_restrictions(self):
+        """Apply role-based restrictions to the UI"""
+        if self.current_user and self.current_user.get('role') == 'receptionist':
+            # Receptionist can only view medical history, not edit
+            self.medical_history_text.config(state=tk.DISABLED)
+        elif self.current_user and self.current_user.get('role') == 'doctor':
+            # Doctor can edit medical history but cannot add new patients or edit patient info
+            self.medical_history_text.config(state=tk.NORMAL)
+            # Hide the Save, Clear, Update, and Delete buttons for doctors (they can't modify patients)
+            if hasattr(self, 'save_btn'):
+                self.save_btn.pack_forget()
+            if hasattr(self, 'clear_btn'):
+                self.clear_btn.pack_forget()
+            if hasattr(self, 'update_btn'):
+                self.update_btn.pack_forget()
+            if hasattr(self, 'delete_btn'):
+                self.delete_btn.pack_forget()
+            # Disable form fields for doctors (read-only patient info)
+            self.disable_form_fields()
+        else:
+            # Admin can edit medical history and add patients
+            self.medical_history_text.config(state=tk.NORMAL)
+    
+    def disable_form_fields(self):
+        """Disable form fields for read-only access (doctors)"""
+        try:
+            # Disable all entry fields
+            if hasattr(self, 'first_name_entry'):
+                self.first_name_entry.config(state=tk.DISABLED)
+            if hasattr(self, 'last_name_entry'):
+                self.last_name_entry.config(state=tk.DISABLED)
+            if hasattr(self, 'age_entry'):
+                self.age_entry.config(state=tk.DISABLED)
+            if hasattr(self, 'treatment_entry'):
+                self.treatment_entry.config(state=tk.DISABLED)
+            if hasattr(self, 'dob_entry'):
+                self.dob_entry.config(state=tk.DISABLED)
+            if hasattr(self, 'phone_entry'):
+                self.phone_entry.config(state=tk.DISABLED)
+            if hasattr(self, 'email_entry'):
+                self.email_entry.config(state=tk.DISABLED)
+            if hasattr(self, 'emergency_contact_entry'):
+                self.emergency_contact_entry.config(state=tk.DISABLED)
+            
+            # Disable text fields
+            if hasattr(self, 'address_text'):
+                self.address_text.config(state=tk.DISABLED)
+                
+        except Exception as e:
+            self.logger.error(f"Error disabling form fields: {e}")
+    
+    def enable_form_fields(self):
+        """Enable form fields for editing (receptionist/admin)"""
+        try:
+            # Enable all entry fields
+            if hasattr(self, 'first_name_entry'):
+                self.first_name_entry.config(state=tk.NORMAL)
+            if hasattr(self, 'last_name_entry'):
+                self.last_name_entry.config(state=tk.NORMAL)
+            if hasattr(self, 'age_entry'):
+                self.age_entry.config(state=tk.NORMAL)
+            if hasattr(self, 'treatment_entry'):
+                self.treatment_entry.config(state=tk.NORMAL)
+            if hasattr(self, 'dob_entry'):
+                self.dob_entry.config(state=tk.NORMAL)
+            if hasattr(self, 'phone_entry'):
+                self.phone_entry.config(state=tk.NORMAL)
+            if hasattr(self, 'email_entry'):
+                self.email_entry.config(state=tk.NORMAL)
+            if hasattr(self, 'emergency_contact_entry'):
+                self.emergency_contact_entry.config(state=tk.NORMAL)
+            
+            # Enable text fields
+            if hasattr(self, 'address_text'):
+                self.address_text.config(state=tk.NORMAL)
+                
+        except Exception as e:
+            self.logger.error(f"Error enabling form fields: {e}")
     
     def create_action_buttons(self, parent):
         """Create action buttons"""
@@ -236,9 +335,73 @@ class PatientFrame(tk.Frame):
         )
         self.clear_btn.pack(side=tk.LEFT)
         
+        # Add Medical History button for doctors
+        if self.current_user and self.current_user.get('role') == 'doctor':
+            self.medical_history_btn = tk.Button(
+                buttons_frame,
+                text="Manage Medical History",
+                command=self.open_medical_history,
+                bg='#9b59b6',
+                fg='white',
+                bd=0,
+                padx=20,
+                pady=8
+            )
+            self.medical_history_btn.pack(side=tk.LEFT, padx=(10, 0))
+        
         # Initially disable update and delete buttons
         self.update_btn.config(state=tk.DISABLED)
         self.delete_btn.config(state=tk.DISABLED)
+    
+    def open_medical_history(self):
+        """Open medical history management window for doctors"""
+        if not self.selected_patient:
+            messagebox.showwarning("Warning", "Please select a patient first")
+            return
+        
+        try:
+            # Create a new window for medical history management
+            history_window = tk.Toplevel(self)
+            history_window.title(f"Medical History - {self.selected_patient['first_name']} {self.selected_patient['last_name']}")
+            history_window.geometry("1000x600")
+            history_window.configure(bg='white')
+            
+            # Create medical history frame
+            from .medical_history_frame import MedicalHistoryFrame
+            history_frame = MedicalHistoryFrame(
+                history_window, 
+                self.db_manager, 
+                self.current_user, 
+                self.selected_patient['id']
+            )
+            history_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+            
+        except Exception as e:
+            self.logger.error(f"Error opening medical history: {e}")
+            messagebox.showerror("Error", f"Failed to open medical history: {str(e)}")
+    
+    def load_doctors(self):
+        """Load doctors for the dropdown"""
+        try:
+            doctors = self.db_manager.get_dentists()
+            if doctors:
+                # Since there's only one doctor, auto-assign it
+                doctor = doctors[0]
+                doctor_display = f"Dr. {doctor['username'].title()}"
+                doctor_options = [doctor_display]
+                self.doctor_combobox['values'] = doctor_options
+                
+                # Auto-assign doctor for receptionists
+                if self.current_user and self.current_user.get('role') == 'receptionist':
+                    self.assigned_doctor_var.set(doctor_display)
+                else:
+                    self.assigned_doctor_var.set(doctor_display)
+            else:
+                self.doctor_combobox['values'] = ["No doctors available"]
+                self.assigned_doctor_var.set("No doctors available")
+        except Exception as e:
+            self.logger.error(f"Error loading doctors: {e}")
+            messagebox.showerror("Error", f"Failed to load doctors: {str(e)}")
     
     def on_search_change(self, *args):
         """Handle search input changes"""
@@ -249,7 +412,7 @@ class PatientFrame(tk.Frame):
         selection = self.patient_tree.selection()
         if selection:
             item = self.patient_tree.item(selection[0])
-            patient_id = item['values'][0]  # Assuming ID is in the first column
+            patient_id = item['tags'][0]  # Get ID from tags
             self.load_patient_details(patient_id)
     
     def load_patients(self):
@@ -263,16 +426,27 @@ class PatientFrame(tk.Frame):
             search_term = self.search_var.get().strip()
             
             # Get patients from database
-            patients = self.db_manager.get_patients(search_term=search_term if search_term else None)
+            if self.current_user and self.current_user.get('role') == 'doctor':
+                # For doctors, only show their assigned patients
+                patients = self.db_manager.get_patients(
+                    search_term=search_term if search_term else None,
+                    assigned_doctor=self.current_user.get('username')
+                )
+            else:
+                # For other roles, show all patients
+                patients = self.db_manager.get_patients(search_term=search_term if search_term else None)
             
             # Add patients to treeview
             for patient in patients:
                 self.patient_tree.insert('', tk.END, values=(
-                    patient['id'],
                     f"{patient['first_name']} {patient['last_name']}",
                     patient.get('phone', ''),
                     patient.get('email', '')
-                ))
+                ), tags=(patient['id'],))
+            
+            # Show message if no patients found for doctor
+            if self.current_user and self.current_user.get('role') == 'doctor' and not patients:
+                messagebox.showinfo("No Patients", "No patients have been assigned to you yet.")
             
         except Exception as e:
             self.logger.error(f"Error loading patients: {e}")
@@ -288,6 +462,8 @@ class PatientFrame(tk.Frame):
                 # Populate form fields
                 self.first_name_var.set(patient_data.get('first_name', ''))
                 self.last_name_var.set(patient_data.get('last_name', ''))
+                self.age_var.set(str(patient_data.get('age', '')) if patient_data.get('age') else '')
+                self.treatment_var.set(patient_data.get('treatment', ''))
                 self.dob_var.set(patient_data.get('date_of_birth', ''))
                 self.phone_var.set(patient_data.get('phone', ''))
                 self.email_var.set(patient_data.get('email', ''))
@@ -297,16 +473,94 @@ class PatientFrame(tk.Frame):
                 self.address_text.delete(1.0, tk.END)
                 self.address_text.insert(1.0, patient_data.get('address', ''))
                 
-                self.medical_history_text.delete(1.0, tk.END)
-                self.medical_history_text.insert(1.0, patient_data.get('medical_history', ''))
+                # Load medical history from separate table
+                self.load_medical_history(patient_id)
                 
                 # Enable update and delete buttons
                 self.update_btn.config(state=tk.NORMAL)
                 self.delete_btn.config(state=tk.NORMAL)
                 
+                # Enable medical history button for doctors
+                if self.current_user and self.current_user.get('role') == 'doctor':
+                    if hasattr(self, 'medical_history_btn'):
+                        self.medical_history_btn.config(state=tk.NORMAL)
+                
         except Exception as e:
             self.logger.error(f"Error loading patient details: {e}")
             messagebox.showerror("Error", f"Failed to load patient details: {str(e)}")
+    
+    def load_medical_history(self, patient_id):
+        """Load medical history from the medical_history table"""
+        try:
+            # Clear existing medical history
+            self.medical_history_text.delete(1.0, tk.END)
+            
+            # Get medical history from database
+            medical_history = self.db_manager.get_medical_history(patient_id)
+            
+            # Debug logging
+            self.logger.info(f"Loading medical history for patient {patient_id}")
+            self.logger.info(f"Found {len(medical_history)} medical history entries")
+            
+            if medical_history:
+                # Format and display medical history with better UI
+                history_text = "📋 MEDICAL HISTORY SUMMARY\n"
+                history_text += "=" * 50 + "\n\n"
+                
+                for i, entry in enumerate(medical_history, 1):
+                    date = entry.get('date', 'Unknown Date')
+                    note = entry.get('note', '')
+                    
+                    # Parse the note to extract treatment and cost
+                    treatment = "General"
+                    cost = "$0"
+                    notes = ""
+                    
+                    if "Treatment:" in note and "Cost:" in note:
+                        parts = note.split("Cost:")
+                        if len(parts) == 2:
+                            treatment_part = parts[0].replace("Treatment:", "").strip()
+                            cost_part = parts[1].strip()
+                            if "Notes:" in cost_part:
+                                cost_notes = cost_part.split("Notes:")
+                                cost = cost_notes[0].strip()
+                                notes = cost_notes[1].strip() if len(cost_notes) > 1 else ""
+                            else:
+                                cost = cost_part
+                            treatment = treatment_part
+                    
+                    self.logger.info(f"Medical history entry: {date} - {note}")
+                    
+                    # Format each entry nicely
+                    history_text += f"📅 Entry #{i} - {date}\n"
+                    history_text += f"🦷 Treatment: {treatment}\n"
+                    history_text += f"💰 Cost: {cost}\n"
+                    if notes:
+                        history_text += f"📝 Notes: {notes}\n"
+                    history_text += "-" * 40 + "\n\n"
+                
+                # Temporarily enable text widget to insert content
+                current_state = self.medical_history_text.cget('state')
+                self.medical_history_text.config(state=tk.NORMAL)
+                self.medical_history_text.insert(1.0, history_text)
+                # Restore original state
+                self.medical_history_text.config(state=current_state)
+            else:
+                # Temporarily enable text widget to insert content
+                current_state = self.medical_history_text.cget('state')
+                self.medical_history_text.config(state=tk.NORMAL)
+                self.medical_history_text.insert(1.0, "📋 MEDICAL HISTORY\n" + "=" * 30 + "\n\nNo medical history available.")
+                # Restore original state
+                self.medical_history_text.config(state=current_state)
+                
+        except Exception as e:
+            self.logger.error(f"Error loading medical history: {e}")
+            # Temporarily enable text widget to insert content
+            current_state = self.medical_history_text.cget('state')
+            self.medical_history_text.config(state=tk.NORMAL)
+            self.medical_history_text.insert(1.0, "❌ Error loading medical history.")
+            # Restore original state
+            self.medical_history_text.config(state=current_state)
     
     def add_patient(self):
         """Add a new patient"""
@@ -374,12 +628,15 @@ class PatientFrame(tk.Frame):
         
         if result:
             try:
-                # Delete patient from database (implementation needed in db_manager)
-                # success = self.db_manager.delete_patient(self.selected_patient['id'])
+                # Delete patient from database
+                success = self.db_manager.delete_patient(self.selected_patient['id'])
                 
-                messagebox.showinfo("Success", "Patient deleted successfully")
-                self.clear_form()
-                self.load_patients()
+                if success:
+                    messagebox.showinfo("Success", "Patient deleted successfully")
+                    self.clear_form()
+                    self.load_patients()
+                else:
+                    messagebox.showerror("Error", "Failed to delete patient")
                 
             except Exception as e:
                 self.logger.error(f"Error deleting patient: {e}")
@@ -392,6 +649,8 @@ class PatientFrame(tk.Frame):
         # Clear all form variables
         self.first_name_var.set('')
         self.last_name_var.set('')
+        self.age_var.set('')
+        self.treatment_var.set('')
         self.dob_var.set('')
         self.phone_var.set('')
         self.email_var.set('')
@@ -404,18 +663,35 @@ class PatientFrame(tk.Frame):
         # Disable update and delete buttons
         self.update_btn.config(state=tk.DISABLED)
         self.delete_btn.config(state=tk.DISABLED)
+        
+        # Disable medical history button for doctors
+        if self.current_user and self.current_user.get('role') == 'doctor':
+            if hasattr(self, 'medical_history_btn'):
+                self.medical_history_btn.config(state=tk.DISABLED)
     
     def get_form_data(self):
         """Get data from form fields"""
+        # Auto-assign doctor since there's only one doctor
+        assigned_doctor = None
+        try:
+            doctors = self.db_manager.get_dentists()
+            if doctors:
+                assigned_doctor = doctors[0]['username']
+        except Exception as e:
+            self.logger.error(f"Error auto-assigning doctor: {e}")
+        
         return {
             'first_name': self.first_name_var.get().strip(),
             'last_name': self.last_name_var.get().strip(),
+            'age': int(self.age_var.get().strip()) if self.age_var.get().strip() else None,
+            'treatment': self.treatment_var.get().strip(),
             'date_of_birth': self.dob_var.get().strip(),
             'phone': self.phone_var.get().strip(),
             'email': self.email_var.get().strip(),
             'address': self.address_text.get(1.0, tk.END).strip(),
             'emergency_contact': self.emergency_contact_var.get().strip(),
-            'medical_history': self.medical_history_text.get(1.0, tk.END).strip()
+            'medical_history': self.medical_history_text.get(1.0, tk.END).strip(),
+            'assigned_doctor': assigned_doctor
         }
     
     def validate_patient_data(self, data):

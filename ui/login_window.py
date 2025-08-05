@@ -292,7 +292,7 @@ Receptionist: receptionist / recep123"""
         app = MainWindow(root, self.db_manager, user)
         
         # Set window properties
-        root.title(f"Dental Clinic Management System - {user['first_name']} {user['last_name']}")
+        root.title(f"Dental Clinic Management System - {user['username'].title()}")
         root.geometry("1200x800")
         root.minsize(800, 600)
         

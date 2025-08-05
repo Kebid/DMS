@@ -10,10 +10,11 @@ import logging
 class DashboardFrame(tk.Frame):
     """Dashboard frame showing role-specific overview information"""
     
-    def __init__(self, parent, db_manager, current_user=None):
+    def __init__(self, parent, db_manager, current_user=None, main_window=None):
         super().__init__(parent, bg='white')
         self.db_manager = db_manager
         self.current_user = current_user
+        self.main_window = main_window  # Reference to main window for navigation
         self.logger = logging.getLogger(__name__)
         
         self.setup_ui()
@@ -183,15 +184,16 @@ class DashboardFrame(tk.Frame):
         # Role-specific actions
         if role == 'receptionist':
             actions = [
+                ("Quick Add Patient", self.quick_add_patient, "#27ae60"),
                 ("Manage Patients", self.manage_patients, "#3498db"),
                 ("Schedule Appointments", self.schedule_appointments, "#e74c3c"),
                 ("Generate Invoices", self.generate_invoices, "#9b59b6"),
                 ("View Calendar", self.view_calendar, "#f39c12")
             ]
-        elif role == 'dentist':
+        elif role in ['dentist', 'doctor']:
             actions = [
                 ("View Today's Appointments", self.view_todays_appointments, "#e74c3c"),
-                ("View Patient History", self.view_patient_history, "#3498db"),
+                ("Manage Medical History", self.manage_medical_history, "#3498db"),
                 ("Add Treatment Records", self.add_treatment_records, "#27ae60"),
                 ("Patient Search", self.patient_search, "#f39c12")
             ]
@@ -327,44 +329,293 @@ class DashboardFrame(tk.Frame):
             self.logger.error(f"Error loading today's appointments: {e}")
     
     # Receptionist Quick Actions
+    def quick_add_patient(self):
+        """Quick action: Open simplified patient addition dialog"""
+        self.show_quick_patient_dialog()
+    
     def manage_patients(self):
-        """Quick action: Manage patients"""
-        messagebox.showinfo("Quick Action", "Manage Patients functionality will be implemented in the Patient Management section.")
+        """Quick action: Navigate to patient management"""
+        if self.main_window:
+            self.main_window.show_patients()
+        else:
+            messagebox.showinfo("Quick Action", "Navigate to Patient Management section")
     
     def schedule_appointments(self):
-        """Quick action: Schedule appointments"""
-        messagebox.showinfo("Quick Action", "Schedule Appointments functionality will be implemented in the Appointment Management section.")
+        """Quick action: Navigate to appointment management"""
+        if self.main_window:
+            self.main_window.show_appointments()
+        else:
+            messagebox.showinfo("Quick Action", "Navigate to Appointment Management section")
     
     def generate_invoices(self):
-        """Quick action: Generate invoices"""
-        messagebox.showinfo("Quick Action", "Generate Invoices functionality will be implemented in the Invoice Management section.")
+        """Quick action: Show invoice generation dialog"""
+        try:
+            # Get patients for invoice generation
+            patients = self.db_manager.get_patients()
+            if not patients:
+                messagebox.showinfo("No Patients", "No patients found. Please add patients first.")
+                return
+            
+            # Create a simple invoice dialog
+            self.show_invoice_dialog(patients)
+        except Exception as e:
+            self.logger.error(f"Error generating invoices: {e}")
+            messagebox.showerror("Error", f"Failed to generate invoices: {str(e)}")
     
     def view_calendar(self):
-        """Quick action: View calendar"""
-        messagebox.showinfo("Quick Action", "View Calendar functionality will be implemented in the Appointment Management section.")
+        """Quick action: Navigate to appointment management for calendar view"""
+        if self.main_window:
+            self.main_window.show_appointments()
+        else:
+            messagebox.showinfo("Quick Action", "Navigate to Appointment Management for calendar view")
     
-    # Dentist Quick Actions
+    # Doctor Quick Actions
     def view_todays_appointments(self):
-        """Quick action: View today's appointments"""
-        messagebox.showinfo("Quick Action", "Today's appointments are displayed above. Detailed view will be implemented in the Appointment Management section.")
+        """Quick action: Navigate to appointment management"""
+        if self.main_window:
+            self.main_window.show_appointments()
+        else:
+            messagebox.showinfo("Quick Action", "Navigate to Appointment Management to view today's appointments")
     
-    def view_patient_history(self):
-        """Quick action: View patient history"""
-        messagebox.showinfo("Quick Action", "View Patient History functionality will be implemented in the Patient Management section.")
+    def manage_medical_history(self):
+        """Quick action: Navigate to medical history management"""
+        if self.main_window:
+            self.main_window.show_medical_history()
+        else:
+            messagebox.showinfo("Quick Action", "Navigate to Medical History Management section")
     
     def add_treatment_records(self):
-        """Quick action: Add treatment records"""
-        messagebox.showinfo("Quick Action", "Add Treatment Records functionality will be implemented in the Treatment Management section.")
+        """Quick action: Navigate to treatment management"""
+        if self.main_window:
+            self.main_window.show_treatments()
+        else:
+            messagebox.showinfo("Quick Action", "Navigate to Treatment Management section")
     
     def patient_search(self):
-        """Quick action: Patient search"""
-        messagebox.showinfo("Quick Action", "Patient Search functionality will be implemented in the Patient Management section.")
+        """Quick action: Navigate to patient management for search"""
+        if self.main_window:
+            self.main_window.show_patients()
+        else:
+            messagebox.showinfo("Quick Action", "Navigate to Patient Management for patient search")
     
     # Admin/General Quick Actions
     def view_treatments(self):
-        """Quick action: View treatments"""
-        messagebox.showinfo("Quick Action", "View Treatments functionality will be implemented in the Treatment Management section.")
+        """Quick action: Navigate to treatment management"""
+        if self.main_window:
+            self.main_window.show_treatments()
+        else:
+            messagebox.showinfo("Quick Action", "Navigate to Treatment Management section")
     
     def generate_reports(self):
-        """Quick action: Generate reports"""
-        messagebox.showinfo("Quick Action", "Generate Reports functionality will be implemented in the Reports section.") 
+        """Quick action: Navigate to reports section"""
+        if self.main_window:
+            self.main_window.show_reports()
+        else:
+            messagebox.showinfo("Quick Action", "Navigate to Reports section")
+    
+    def show_invoice_dialog(self, patients):
+        """Show a simple invoice generation dialog"""
+        # Create a new window for invoice generation
+        invoice_window = tk.Toplevel(self)
+        invoice_window.title("Generate Invoice")
+        invoice_window.geometry("400x300")
+        invoice_window.configure(bg='white')
+        
+        # Title
+        title_label = tk.Label(
+            invoice_window,
+            text="Generate Invoice",
+            font=('Arial', 16, 'bold'),
+            bg='white'
+        )
+        title_label.pack(pady=20)
+        
+        # Patient selection
+        tk.Label(invoice_window, text="Select Patient:", bg='white').pack(pady=5)
+        patient_var = tk.StringVar()
+        patient_combo = ttk.Combobox(
+            invoice_window, 
+            textvariable=patient_var,
+            values=[f"{p['first_name']} {p['last_name']}" for p in patients],
+            state="readonly",
+            width=30
+        )
+        patient_combo.pack(pady=5)
+        
+        # Amount input
+        tk.Label(invoice_window, text="Amount ($):", bg='white').pack(pady=5)
+        amount_var = tk.StringVar()
+        amount_entry = tk.Entry(invoice_window, textvariable=amount_var, width=30)
+        amount_entry.pack(pady=5)
+        
+        # Notes input
+        tk.Label(invoice_window, text="Notes:", bg='white').pack(pady=5)
+        notes_text = tk.Text(invoice_window, height=3, width=30)
+        notes_text.pack(pady=5)
+        
+        # Generate button
+        def generate_invoice():
+            try:
+                selected_patient = patient_var.get()
+                amount = amount_var.get()
+                notes = notes_text.get(1.0, tk.END).strip()
+                
+                if not selected_patient or not amount:
+                    messagebox.showwarning("Missing Information", "Please select a patient and enter an amount.")
+                    return
+                
+                # Find the selected patient
+                patient = None
+                for p in patients:
+                    if f"{p['first_name']} {p['last_name']}" == selected_patient:
+                        patient = p
+                        break
+                
+                if not patient:
+                    messagebox.showerror("Error", "Selected patient not found.")
+                    return
+                
+                # Create invoice data
+                invoice_data = {
+                    'patient_id': patient['id'],
+                    'amount': float(amount),
+                    'notes': notes,
+                    'date': date.today().isoformat(),
+                    'status': 'pending'
+                }
+                
+                # Add invoice to database
+                invoice_id = self.db_manager.add_invoice(invoice_data)
+                
+                messagebox.showinfo("Success", f"Invoice generated successfully!\nInvoice ID: {invoice_id}\nPatient: {selected_patient}\nAmount: ${amount}")
+                invoice_window.destroy()
+                
+            except ValueError:
+                messagebox.showerror("Invalid Amount", "Please enter a valid amount.")
+            except Exception as e:
+                self.logger.error(f"Error generating invoice: {e}")
+                messagebox.showerror("Error", f"Failed to generate invoice: {str(e)}")
+        
+        generate_btn = tk.Button(
+            invoice_window,
+            text="Generate Invoice",
+            command=generate_invoice,
+            bg='#27ae60',
+            fg='white',
+            bd=0,
+            padx=20,
+            pady=8
+        )
+        generate_btn.pack(pady=20)
+    
+    def show_quick_patient_dialog(self):
+        """Show a simplified patient addition dialog"""
+        # Create a new window for quick patient addition
+        patient_window = tk.Toplevel(self)
+        patient_window.title("Quick Add Patient")
+        patient_window.geometry("400x350")
+        patient_window.configure(bg='white')
+        
+        # Title
+        title_label = tk.Label(
+            patient_window,
+            text="Quick Add Patient",
+            font=('Arial', 16, 'bold'),
+            bg='white'
+        )
+        title_label.pack(pady=20)
+        
+        # Form frame
+        form_frame = tk.Frame(patient_window, bg='white')
+        form_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
+        
+        # First Name
+        tk.Label(form_frame, text="First Name:", bg='white').grid(row=0, column=0, sticky=tk.W, pady=5)
+        first_name_var = tk.StringVar()
+        first_name_entry = tk.Entry(form_frame, textvariable=first_name_var, width=30)
+        first_name_entry.grid(row=0, column=1, sticky=tk.W, pady=5, padx=(10, 0))
+        
+        # Last Name
+        tk.Label(form_frame, text="Last Name:", bg='white').grid(row=1, column=0, sticky=tk.W, pady=5)
+        last_name_var = tk.StringVar()
+        last_name_entry = tk.Entry(form_frame, textvariable=last_name_var, width=30)
+        last_name_entry.grid(row=1, column=1, sticky=tk.W, pady=5, padx=(10, 0))
+        
+        # Age
+        tk.Label(form_frame, text="Age:", bg='white').grid(row=2, column=0, sticky=tk.W, pady=5)
+        age_var = tk.StringVar()
+        age_entry = tk.Entry(form_frame, textvariable=age_var, width=30)
+        age_entry.grid(row=2, column=1, sticky=tk.W, pady=5, padx=(10, 0))
+        
+        # Phone
+        tk.Label(form_frame, text="Phone:", bg='white').grid(row=3, column=0, sticky=tk.W, pady=5)
+        phone_var = tk.StringVar()
+        phone_entry = tk.Entry(form_frame, textvariable=phone_var, width=30)
+        phone_entry.grid(row=3, column=1, sticky=tk.W, pady=5, padx=(10, 0))
+        
+        # Treatment
+        tk.Label(form_frame, text="Treatment:", bg='white').grid(row=4, column=0, sticky=tk.W, pady=5)
+        treatment_var = tk.StringVar()
+        treatment_entry = tk.Entry(form_frame, textvariable=treatment_var, width=30)
+        treatment_entry.grid(row=4, column=1, sticky=tk.W, pady=5, padx=(10, 0))
+        
+        # Add button
+        def add_patient():
+            try:
+                # Validate required fields
+                if not first_name_var.get().strip() or not last_name_var.get().strip():
+                    messagebox.showwarning("Missing Information", "First Name and Last Name are required.")
+                    return
+                
+                # Prepare patient data
+                patient_data = {
+                    'first_name': first_name_var.get().strip(),
+                    'last_name': last_name_var.get().strip(),
+                    'age': int(age_var.get()) if age_var.get().strip() else None,
+                    'phone': phone_var.get().strip(),
+                    'treatment': treatment_var.get().strip(),
+                    'email': '',
+                    'address': '',
+                    'city': '',
+                    'state': '',
+                    'postal_code': '',
+                    'emergency_contact_name': '',
+                    'emergency_contact_phone': '',
+                    'emergency_contact_relationship': '',
+                    'assigned_doctor': None
+                }
+                
+                # Auto-assign to doctor if available
+                try:
+                    doctors = self.db_manager.get_dentists()
+                    if doctors:
+                        patient_data['assigned_doctor'] = doctors[0]['username']
+                except Exception as e:
+                    self.logger.error(f"Error auto-assigning doctor: {e}")
+                
+                # Add patient to database
+                patient_id = self.db_manager.add_patient(patient_data)
+                
+                messagebox.showinfo("Success", f"Patient added successfully!\nPatient ID: {patient_id}\nName: {patient_data['first_name']} {patient_data['last_name']}")
+                patient_window.destroy()
+                
+                # Refresh dashboard data
+                self.load_dashboard_data()
+                
+            except ValueError:
+                messagebox.showerror("Invalid Age", "Please enter a valid age.")
+            except Exception as e:
+                self.logger.error(f"Error adding patient: {e}")
+                messagebox.showerror("Error", f"Failed to add patient: {str(e)}")
+        
+        add_btn = tk.Button(
+            patient_window,
+            text="Add Patient",
+            command=add_patient,
+            bg='#27ae60',
+            fg='white',
+            bd=0,
+            padx=20,
+            pady=8
+        )
+        add_btn.pack(pady=20) 

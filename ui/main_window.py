@@ -177,7 +177,7 @@ class MainWindow:
     def show_dashboard(self):
         """Show the dashboard frame"""
         self.clear_content()
-        self.current_frame = DashboardFrame(self.content_frame, self.db_manager, self.current_user)
+        self.current_frame = DashboardFrame(self.content_frame, self.db_manager, self.current_user, self)
         self.current_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         self.status_label.configure(text="Dashboard loaded")
         self.logger.info("Dashboard displayed")
@@ -185,7 +185,7 @@ class MainWindow:
     def show_patients(self):
         """Show the patients frame"""
         self.clear_content()
-        self.current_frame = PatientFrame(self.content_frame, self.db_manager)
+        self.current_frame = PatientFrame(self.content_frame, self.db_manager, self.current_user)
         self.current_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         self.status_label.configure(text="Patient management loaded")
         self.logger.info("Patient management displayed")
@@ -205,6 +205,12 @@ class MainWindow:
         self.current_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         self.status_label.configure(text="Treatment management loaded")
         self.logger.info("Treatment management displayed")
+    
+    def show_medical_history(self):
+        """Show the medical history management (via patient management)"""
+        self.show_patients()  # Medical history is managed through patient management
+        self.status_label.configure(text="Medical history management loaded")
+        self.logger.info("Medical history management displayed")
     
     def show_reports(self):
         """Show the reports frame (placeholder)"""
@@ -262,13 +268,17 @@ class MainWindow:
         ]
         
         # Role-specific navigation
-        if role in ['admin', 'receptionist']:
+        if role in ['admin', 'receptionist', 'doctor']:
             nav_buttons.extend([
                 ("Patients", self.show_patients),
+            ])
+        
+        if role in ['admin', 'receptionist']:
+            nav_buttons.extend([
                 ("Appointments", self.show_appointments),
             ])
         
-        if role in ['admin', 'dentist', 'doctor']:
+        if role in ['admin', 'doctor']:
             nav_buttons.extend([
                 ("Treatments", self.show_treatments),
             ])
